@@ -23,29 +23,25 @@ module Rubinius
     end
 
     def each
-      i = 0
-      t = fields
-      while i < t
+      (0...fields).each do |i|
         yield at(i)
-        i += 1
       end
+
       self
     end
 
     def ==(tup)
       return super unless tup.kind_of?(Tuple)
 
-      t = fields()
+      t = fields
 
       return false unless t == tup.size
 
-      i = 0
-      while i < t
+      (0...t).each do |i|
         return false unless at(i) == tup.at(i)
-        i += 1
       end
 
-      return true
+      true
     end
 
     def +(o)
@@ -57,12 +53,8 @@ module Rubinius
 
     def inspect
       str = "#<#{self.class}"
-      if fields == 0
-        str << " empty>"
-      else
-        str << ": #{join(", ", :inspect)}>"
-      end
-      return str
+
+      str << (fields.zero? ? " empty>" : ": #{join(", ", :inspect)}>")
     end
 
     def join(sep, meth=:to_s)
@@ -70,28 +62,21 @@ module Rubinius
     end
 
     def join_upto(sep, count, meth=:to_s)
-      str = ""
-      return str if count == 0 or empty?
+      return "" if count.zero? or empty?
 
-      count = fields if count >= fields
-      count -= 1
-      i = 0
-      while i < count
-        str.append at(i).__send__(meth)
-        str.append sep.dup
-        i += 1
+      count = fields if count > fields
+
+      (0...count).inject("") do |str, i|
+        str << at(i).__send__(meth)
+        str << sep.dup if i < count - 1
+        str
       end
-
-      str.append at(count).__send__(meth)
-      return str
     end
 
     def ===(other)
       return false unless Tuple === other and fields == other.fields
-      i = 0
-      while i < fields
+      (0...fields).each do |i|
         return false unless at(i) === other.at(i)
-        i += 1
       end
       true
     end
@@ -100,21 +85,19 @@ module Rubinius
       ary = Array.allocate
       ary.tuple = dup
       ary.total = fields
-      return ary
+      ary
     end
 
     def shift
       return self unless fields > 0
       t = Tuple.new(fields-1)
       t.copy_from self, 1, fields-1, 0
-      return t
+      t
     end
 
     # Swap elements of the two indexes.
     def swap(a, b)
-      temp = at(a)
-      put a, at(b)
-      put b, temp
+      at(a), at(b) = at(b), at(a)
     end
 
     alias_method :size, :fields
